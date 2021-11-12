@@ -14,6 +14,8 @@ class Stats():
 		self.workload = WorkloadModel
 		self.datacenter = Datacenter
 		self.scheduler = Scheduler
+		powermodels, costs = ['PMB2s', 'PMB4ms', 'PMB8ms'], np.array([0.08, 0.17, 0.33]) / 12
+		self.costs = dict(zip(powermodels, costs))
 		self.initStats()
 
 	def initStats(self):	
@@ -99,6 +101,7 @@ class Stats():
 		metrics['slaviolationspercentage'] = metrics['slaviolations'] * 100.0 / len(destroyed) if len(destroyed) > 0 else 0
 		metrics['waittime'] = [c.startAt - c.createAt for c in destroyed]
 		metrics['util'] = [host.getCPU()/100 for host in self.env.hostlist]
+		metrics['cost'] = [self.costs[host.powermodel.__class__.__name__] for host in self.env.hostlist]
 		self.metrics.append(metrics)
 
 	def saveSchedulerInfo(self, selectedcontainers, decision, schedulingtime):
@@ -146,15 +149,15 @@ class Stats():
 		plt.savefig(dirname + '/' + title + '.pdf')
 
 	def generateMetricsWithInterval(self, dirname):
-		fig, axes = plt.subplots(9, 1, sharex=True, figsize=(4, 5))
+		fig, axes = plt.subplots(10, 1, sharex=True, figsize=(4, 6))
 		x = list(range(len(self.metrics)))
 		res = {}; table = []
 		labels = ['Total Containers Run', 'Number of Migrations', 'Energy per interval', 'Response Time per interval',\
 			'Migration Time per interval', 'SLA Violations per interval', 'SLA Violations (%) per interval', \
-			'Waiting Time per interval', 'Energy per container per interval', 'Utilization Ratio']
+			'Waiting Time per interval', 'Energy per container per interval', 'Cost (USD) per interval', 'Utilization Ratio']
 		for i,metric in enumerate(['numdestroyed', 'nummigrations', 'energytotalinterval', 'avgresponsetime',\
-			 'avgmigrationtime', 'slaviolations', 'slaviolationspercentage', 'waittime', 'energypercontainerinterval']):
-			metric_with_interval = [self.metrics[i][metric] for i in range(len(self.metrics))] if metric != 'waittime' else \
+			 'avgmigrationtime', 'slaviolations', 'slaviolationspercentage', 'waittime', 'energypercontainerinterval', 'cost']):
+			metric_with_interval = [self.metrics[i][metric] for i in range(len(self.metrics))] if metric != 'waittime' and metric != 'cost' else \
 				[sum(self.metrics[i][metric]) for i in range(len(self.metrics))]
 			axes[i].plot(x, metric_with_interval)
 			axes[i].set_ylabel(metric, fontsize=5)

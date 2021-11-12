@@ -11,5 +11,5 @@ class RLScheduler(Scheduler):
         return self.RandomContainerSelection()
 
     def placement(self, containerIDs):
-        return self.MaxFullPlacement(containerIDs)
+        return self.LeastFullPlacement(containerIDs)
 
