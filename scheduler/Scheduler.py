@@ -179,7 +179,7 @@ class Scheduler():
         decision = []
         hostIPSs = [(self.env.hostlist[i].getCPU(), i) for i in range(len(self.env.hostlist))]
         for cid in containerIDs:
-            leastFullHost = min(hostIPSs)
-            decision.append((cid, leastFullHost[1]))
-            hostIPSs.remove(leastFullHost)
+            maxFullHost = max(hostIPSs)
+            decision.append((cid, maxFullHost[1]))
+            hostIPSs.remove(maxFullHost)
         return decision

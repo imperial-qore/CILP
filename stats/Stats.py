@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scheduler.GOBI import GOBIScheduler
+from tabulate import tabulate
 
 plt.style.use(['science'])
 plt.rcParams["text.usetex"] = False
@@ -13,8 +14,6 @@ class Stats():
 		self.workload = WorkloadModel
 		self.datacenter = Datacenter
 		self.scheduler = Scheduler
-		self.simulated_scheduler = GOBIScheduler('energy_latency_'+str(self.datacenter.num_hosts))
-		self.simulated_scheduler.env = self.env
 		self.initStats()
 
 	def initStats(self):	
@@ -99,7 +98,7 @@ class Stats():
 		metrics['slaviolations'] = len(np.where([c.destroyAt > c.sla for c in destroyed]))
 		metrics['slaviolationspercentage'] = metrics['slaviolations'] * 100.0 / len(destroyed) if len(destroyed) > 0 else 0
 		metrics['waittime'] = [c.startAt - c.createAt for c in destroyed]
-		metrics['energytotalinterval_pred'], metrics['avgresponsetime_pred'] = self.runSimulationGOBI()
+		metrics['util'] = [host.getCPU()/100 for host in self.env.hostlist]
 		self.metrics.append(metrics)
 
 	def saveSchedulerInfo(self, selectedcontainers, decision, schedulingtime):
@@ -121,47 +120,6 @@ class Stats():
 		self.saveMetrics(destroyed, migrations)
 		self.saveSchedulerInfo(selectedcontainers, decision, schedulingtime)
 
-	def runSimpleSimulation(self, decision):
-		host_alloc = []; container_alloc = [-1] * len(self.env.hostlist)
-		for i in range(len(self.env.hostlist)):
-			host_alloc.append([])
-		for c in self.env.containerlist:
-			if c and c.getHostID() != -1: 
-				host_alloc[c.getHostID()].append(c.id) 
-				container_alloc[c.id] = c.getHostID()
-		decision = self.simulated_scheduler.filter_placement(decision)
-		for cid, hid in decision:
-			if self.env.getPlacementPossible(cid, hid) and container_alloc[cid] != -1:
-				host_alloc[container_alloc[cid]].remove(cid)
-				host_alloc[hid].append(cid)
-		energytotalinterval_pred = 0
-		for hid, cids in enumerate(host_alloc):
-			ips = 0
-			for cid in cids: ips += self.env.containerlist[cid].getApparentIPS()
-			energytotalinterval_pred += self.env.hostlist[hid].getPowerFromIPS(ips)
-		return energytotalinterval_pred*self.env.intervaltime, max(0, np.mean([metric_d['avgresponsetime'] for metric_d in self.metrics[-5:]]))
-
-	def runSimulationGOBI(self):
-		host_alloc = []; container_alloc = [-1] * len(self.env.hostlist)
-		for i in range(len(self.env.hostlist)):
-			host_alloc.append([])
-		for c in self.env.containerlist:
-			if c and c.getHostID() != -1: 
-				host_alloc[c.getHostID()].append(c.id) 
-				container_alloc[c.id] = c.getHostID()
-		selected = self.simulated_scheduler.selection()
-		decision = self.simulated_scheduler.filter_placement(self.simulated_scheduler.placement(selected))
-		for cid, hid in decision:
-			if self.env.getPlacementPossible(cid, hid) and container_alloc[cid] != -1:
-				host_alloc[container_alloc[cid]].remove(cid)
-				host_alloc[hid].append(cid)
-		energytotalinterval_pred = 0
-		for hid, cids in enumerate(host_alloc):
-			ips = 0
-			for cid in cids: ips += self.env.containerlist[cid].getApparentIPS()
-			energytotalinterval_pred += self.env.hostlist[hid].getPowerFromIPS(ips)
-		return energytotalinterval_pred*self.env.intervaltime, max(0, np.mean([metric_d['avgresponsetime'] for metric_d in self.metrics[-5:]]))
-
 	########################################################################################################
 
 	def generateGraphsWithInterval(self, dirname, listinfo, obj, metric, metric2=None):
@@ -172,10 +130,10 @@ class Stats():
 		metric_with_interval = []; metric2_with_interval = []
 		ylimit = 0; ylimit2 = 0
 		for hostID in range(len(listinfo[0][metric])):
-			metric_with_interval.append([listinfo[interval][metric][hostID] for interval in range(totalIntervals)])
+			metric_with_interval.append([(0 if hostID >= len(listinfo[interval][metric]) else listinfo[interval][metric][hostID]) for interval in range(totalIntervals)])
 			ylimit = max(ylimit, max(metric_with_interval[-1]))
 			if metric2:
-				metric2_with_interval.append([listinfo[interval][metric2][hostID] for interval in range(totalIntervals)])
+				metric2_with_interval.append([(0 if hostID >= len(listinfo[interval][metric2]) else listinfo[interval][metric][hostID]) for interval in range(totalIntervals)])
 				ylimit2 = max(ylimit2, max(metric2_with_interval[-1]))
 		for hostID in range(len(listinfo[0][metric])):
 			axes[hostID].set_ylim(0, max(ylimit, ylimit2))
@@ -190,7 +148,10 @@ class Stats():
 	def generateMetricsWithInterval(self, dirname):
 		fig, axes = plt.subplots(9, 1, sharex=True, figsize=(4, 5))
 		x = list(range(len(self.metrics)))
-		res = {}
+		res = {}; table = []
+		labels = ['Total Containers Run', 'Number of Migrations', 'Energy per interval', 'Response Time per interval',\
+			'Migration Time per interval', 'SLA Violations per interval', 'SLA Violations (%) per interval', \
+			'Waiting Time per interval', 'Energy per container per interval', 'Utilization Ratio']
 		for i,metric in enumerate(['numdestroyed', 'nummigrations', 'energytotalinterval', 'avgresponsetime',\
 			 'avgmigrationtime', 'slaviolations', 'slaviolationspercentage', 'waittime', 'energypercontainerinterval']):
 			metric_with_interval = [self.metrics[i][metric] for i in range(len(self.metrics))] if metric != 'waittime' else \
@@ -199,8 +160,18 @@ class Stats():
 			axes[i].set_ylabel(metric, fontsize=5)
 			axes[i].grid(b=True, which='both', color='#eeeeee', linestyle='-')
 			res[metric] = sum(metric_with_interval)
-			print("Summation ", metric, " = ", res[metric])
-		print('Average energy (sum energy interval / sum numdestroyed) = ', res['energytotalinterval']/res['numdestroyed'])
+			avg = np.average(metric_with_interval)
+			std = np.std(metric_with_interval)
+			if 'energy' in metric:
+				avg /= 10e4; std /= 10e4
+			if 'numdestroyed' in metric:
+				avg *= 100
+			table.append([labels[i], "{:.4f}".format(avg) + u" \u00B1" + f' {"{:.4f}".format(std)}'])
+		metric_with_interval = [sum(self.hostinfo[i]['apparentips']) / sum(self.hostinfo[i]['ipscap']) for i in range(len(self.hostinfo))]
+		avg = np.average(metric_with_interval); std = np.std(metric_with_interval)
+		table.append([labels[-1], "{:.4f}".format(avg) + u"\u00B1" + f' {"{:.4f}".format(std)}'])
+		print(tabulate(table, headers=['Metric', 'Value'], tablefmt='orgtbl'))
+		print('Average energy (sum energy interval / sum numdestroyed) :', res['energytotalinterval']/res['numdestroyed']/10e6)
 		plt.tight_layout(pad=0)
 		plt.savefig(dirname + '/' + 'Metrics' + '.pdf')
 
@@ -284,9 +255,9 @@ class Stats():
 
 	def generateDatasets(self, dirname):
 		# self.generateDatasetWithInterval(dirname, 'cpu', objfunc='energytotalinterval')
-		self.generateDatasetWithInterval(dirname, 'cpu', metric2='apparentips', objfunc='energytotalinterval', objfunc2='avgresponsetime')
-		self.generateDatasetWithInterval2(dirname, 'cpu', 'apparentips', 'energytotalinterval_pred', 'avgresponsetime_pred', objfunc='energytotalinterval', objfunc2='avgresponsetime')
-		
+		# self.generateDatasetWithInterval(dirname, 'cpu', metric2='apparentips', objfunc='energytotalinterval', objfunc2='avgresponsetime')
+		pass
+
 	def generateCompleteDatasets(self, dirname):
 		self.generateCompleteDataset(dirname, self.hostinfo, 'hostinfo')
 		self.generateCompleteDataset(dirname, self.workloadinfo, 'workloadinfo')

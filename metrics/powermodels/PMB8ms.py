@@ -12,7 +12,7 @@ class PMB8ms(PM):
 	# cpu consumption in 100
 	def power(self):
 		cpu = self.host.getCPU()
-		index = math.floor(cpu / 10)
+		index = math.floor(max(0, min(99.9, cpu)) / 10)
 		left = self.powerlist[index]
 		right = self.powerlist[index + 1 if cpu%10 != 0 else index]
 		alpha = (cpu / 10) - index

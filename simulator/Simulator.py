@@ -5,12 +5,14 @@ class Simulator():
 	# Total power in watt
 	# Total Router Bw
 	# Interval Time in seconds
-	def __init__(self, TotalPower, RouterBw, Scheduler, ContainerLimit, IntervalTime, hostinit):
+	def __init__(self, TotalPower, RouterBw, Scheduler, Provisioner, ContainerLimit, IntervalTime, hostinit):
 		self.totalpower = TotalPower
 		self.totalbw = RouterBw
 		self.hostlimit = len(hostinit)
 		self.scheduler = Scheduler
 		self.scheduler.setEnvironment(self)
+		self.provisioner = Provisioner
+		self.provisioner.setEnvironment(self)
 		self.containerlimit = ContainerLimit
 		self.hostlist = []
 		self.containerlist = []
@@ -21,12 +23,12 @@ class Simulator():
 		self.addHostlistInit(hostinit)
 
 	def addHostInit(self, IPS, RAM, Disk, Bw, Latency, Powermodel):
-		assert len(self.hostlist) < self.hostlimit
+		# assert len(self.hostlist) < self.hostlimit
 		host = Host(len(self.hostlist), IPS, RAM, Disk, Bw, Latency, Powermodel, self)
 		self.hostlist.append(host)
 
 	def addHostlistInit(self, hostList):
-		assert len(hostList) == self.hostlimit
+		# assert len(hostList) == self.hostlimit
 		for IPS, RAM, Disk, Bw, Latency, Powermodel in hostList:
 			self.addHostInit(IPS, RAM, Disk, Bw, Latency, Powermodel)
 
@@ -94,11 +96,7 @@ class Simulator():
 		disksizeav, diskreadav, diskwriteav = host.getDiskAvailable()
 		return (ipsreq <= ipsavailable and \
 				ramsizereq <= ramsizeav and \
-				# ramreadreq <= ramreadav and \
-				# ramwritereq <= ramwriteav and \
-				disksizereq <= disksizeav \
-				# diskreadreq <= diskreadav and \
-				# diskwritereq <= diskwriteav
+				disksizereq <= disksizeav
 				)
 
 	def addContainersInit(self, containerInfoListInit):

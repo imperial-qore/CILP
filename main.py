@@ -11,13 +11,6 @@ from time import time
 from subprocess import call
 from os import system, rename
 
-# Framework imports
-from framework.Framework import *
-from framework.database.Database import *
-from framework.datacenter.Datacenter_Setup import *
-from framework.datacenter.Datacenter import *
-from framework.workload.DeFogWorkload import *
-
 # Simulator imports
 from simulator.Simulator import *
 from simulator.environment.AzureFog import *
@@ -38,39 +31,26 @@ from scheduler.Random_Random_Random import RandomScheduler
 from scheduler.HGP_LBFGS import HGPScheduler
 from scheduler.GA import GAScheduler
 from scheduler.GOBI import GOBIScheduler
-from scheduler.GOBI2 import GOBI2Scheduler
-from scheduler.DRL import DRLScheduler
-from scheduler.DQL import DQLScheduler
-from scheduler.POND import PONDScheduler
-from scheduler.SOGOBI import SOGOBIScheduler
-from scheduler.SOGOBI2 import SOGOBI2Scheduler
-from scheduler.HGOBI import HGOBIScheduler
-from scheduler.HGOBI2 import HGOBI2Scheduler
-from scheduler.HSOGOBI import HSOGOBIScheduler
-from scheduler.HSOGOBI2 import HSOGOBI2Scheduler
+
+# Provisioner imports
+from provisioner.Provisioner import *
+from provisioner.Random_Provisioner import RandomProvisioner
 
 # Auxiliary imports
 from stats.Stats import *
 from utils.Utils import *
 from pdb import set_trace as bp
 
-usage = "usage: python main.py -e <environment> -m <mode> # empty environment run simulator"
-
-parser = optparse.OptionParser(usage=usage)
-parser.add_option("-e", "--environment", action="store", dest="env", default="", 
-					help="Environment is AWS, Openstack, Azure, VLAN, Vagrant")
-parser.add_option("-m", "--mode", action="store", dest="mode", default="0", 
-					help="Mode is 0 (Create and destroy), 1 (Create), 2 (No op), 3 (Destroy)")
-opts, args = parser.parse_args()
+usage = "usage: python main.py"
 
 # Global constants
 NUM_SIM_STEPS = 100
-HOSTS = 10 * 5 if opts.env == '' else 10
+HOSTS = 10 * 5
 CONTAINERS = HOSTS
 TOTAL_POWER = 1000
 ROUTER_BW = 10000
 INTERVAL_TIME = 300 # seconds
-NEW_CONTAINERS = 0 if HOSTS == 10 else 5
+NEW_CONTAINERS = 7
 DB_NAME = ''
 DB_HOST = ''
 DB_PORT = 0
@@ -86,29 +66,24 @@ def initalizeEnvironment(environment, logger):
 		db = Database(DB_NAME, DB_HOST, DB_PORT)
 
 	# Initialize simple fog datacenter
-	''' Can be SimpleFog, BitbrainFog, AzureFog // Datacenter '''
-	if environment != '':
-		datacenter = Datacenter(HOSTS_IP, environment, 'Virtual')
-	else:
-		datacenter = AzureFog(HOSTS)
+	''' Can be SimpleFog, BitbrainFog, AzureFog '''
+	datacenter = AzureFog(HOSTS)
 
 	# Initialize workload
-	''' Can be SWSD, BWGD, BWGD2 // DFW '''
-	if environment != '':
-		workload = DFW(NEW_CONTAINERS, 1.5, db)
-	else: 
-		workload = BWGD2(NEW_CONTAINERS, 1.5)
+	''' Can be SWSD, BWGD, BWGD2 '''
+	workload = BWGD2(NEW_CONTAINERS, 1.5)
 	
 	# Initialize scheduler
 	''' Can be LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI (arg = 'energy_latency_'+str(HOSTS)) '''
-	scheduler = GOBIScheduler('energy_latency_'+str(HOSTS)) # GOBIScheduler('energy_latency_'+str(HOSTS))
+	scheduler = RLScheduler() # GOBIScheduler('energy_latency_'+str(HOSTS))
+
+	# Initialize provisioner
+	''' Can be  '''
+	provisioner = RandomProvisioner(datacenter)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()
-	if environment != '':
-		env = Framework(scheduler, CONTAINERS, INTERVAL_TIME, hostlist, db, environment, logger)
-	else:
-		env = Simulator(TOTAL_POWER, ROUTER_BW, scheduler, CONTAINERS, INTERVAL_TIME, hostlist)
+	env = Simulator(TOTAL_POWER, ROUTER_BW, scheduler, provisioner, CONTAINERS, INTERVAL_TIME, hostlist)
 
 	# Execute first step
 	newcontainerinfos = workload.generateNewContainers(env.interval) # New containers info
@@ -126,11 +101,11 @@ def initalizeEnvironment(environment, logger):
 	# Initialize stats
 	stats = Stats(env, workload, datacenter, scheduler)
 	stats.saveStats(deployed, migrations, [], deployed, decision, schedulingTime)
-	return datacenter, workload, scheduler, env, stats
+	return datacenter, workload, scheduler, provisioner, env, stats
 
-def stepSimulation(workload, scheduler, env, stats):
+def stepSimulation(workload, scheduler, provisioner, env, stats):
 	newcontainerinfos = workload.generateNewContainers(env.interval) # New containers info
-	if opts.env != '': print(newcontainerinfos)
+	orphaned = provisioner.provision()
 	deployed, destroyed = env.addContainers(newcontainerinfos) # Deploy new containers and get container IDs
 	start = time()
 	selected = scheduler.selection() # Select container IDs for migration
@@ -143,7 +118,8 @@ def stepSimulation(workload, scheduler, env, stats):
 	print("Destroyed:", len(destroyed), "of", env.getNumActiveContainers())
 	print("Containers in host:", env.getContainersInHosts())
 	print("Num active containers:", env.getNumActiveContainers())
-	print("Host allocation:", [(c.getHostID() if c else -1)for c in env.containerlist])
+	print("Host allocation:", [(c.getHostID() if c else -1) for c in env.containerlist])
+	print("Num Hosts:", len(env.hostlist))
 	printDecisionAndMigrations(decision, migrations)
 
 	stats.saveStats(deployed, migrations, destroyed, selected, decision, schedulingTime)
@@ -181,53 +157,11 @@ def saveStats(stats, datacenter, workload, env, end=True):
 	    pickle.dump(stats, handle)
 
 if __name__ == '__main__':
-	env, mode = opts.env, int(opts.mode)
-
-	if env != '':
-		# Convert all agent files to unix format
-		unixify(['framework/agent/', 'framework/agent/scripts/'])
-
-		# Start InfluxDB service
-		print(color.HEADER+'InfluxDB service runs as a separate front-end window. Please minimize this window.'+color.ENDC)
-		if 'Windows' in platform.system():
-			os.startfile('C:/Program Files/InfluxDB/influxdb-1.8.3-1/influxd.exe')
-
-		configFile = 'framework/config/' + opts.env + '_config.json'
-	    
-		logger.basicConfig(filename=logFile, level=logger.DEBUG,
-	                        format='%(asctime)s - %(levelname)s - %(message)s')
-		logger.debug("Creating enviornment in :{}".format(env))
-		cfg = {}
-		with open(configFile, "r") as f:
-			cfg = json.load(f)
-		DB_HOST = cfg['database']['ip']
-		DB_PORT = cfg['database']['port']
-		DB_NAME = 'COSCO'
-
-		if env == 'Vagrant':
-			print("Setting up VirtualBox environment using Vagrant")
-			HOSTS_IP = setupVagrantEnvironment(configFile, mode)
-			print(HOSTS_IP)
-		elif env == 'VLAN':
-			print("Setting up VLAN environment using Ansible")
-			HOSTS_IP = setupVLANEnvironment(configFile, mode)
-			print(HOSTS_IP)
-		# exit()
-
-	datacenter, workload, scheduler, env, stats = initalizeEnvironment(env, logger)
+	env, mode = '', 0
+	datacenter, workload, scheduler, provisioner, env, stats = initalizeEnvironment(env, logger)
 
 	for step in range(NUM_SIM_STEPS):
 		print(color.BOLD+"Simulation Interval:", step, color.ENDC)
-		stepSimulation(workload, scheduler, env, stats)
-		if env != '' and step % 10 == 0: saveStats(stats, datacenter, workload, env, end = False)
-
-	if opts.env != '':
-		# Destroy environment if required
-		eval('destroy'+opts.env+'Environment(configFile, mode)')
-
-		# Quit InfluxDB
-		if 'Windows' in platform.system():
-			os.system('taskkill /f /im influxd.exe')
+		stepSimulation(workload, scheduler, provisioner, env, stats)
 
 	saveStats(stats, datacenter, workload, env)
-
