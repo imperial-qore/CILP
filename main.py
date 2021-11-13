@@ -17,6 +17,8 @@ from simulator.environment.AzureFog import *
 from simulator.environment.BitbrainFog import *
 from simulator.workload.BitbrainWorkload_GaussianDistribution import *
 from simulator.workload.BitbrainWorkload2 import *
+from simulator.workload.Azure2017Workload import *
+from simulator.workload.Azure2019Workload import *
 
 # Scheduler imports
 from scheduler.IQR_MMT_Random import IQRMMTRScheduler
@@ -78,8 +80,8 @@ def initalizeEnvironment(environment, logger):
 	datacenter = AzureFog(HOSTS)
 
 	# Initialize workload
-	''' Can be SWSD, BWGD, BWGD2 '''
-	workload = BWGD2(NEW_CONTAINERS, 1.5)
+	''' Can be BWGD2, AzureW2017, AzureW2019 '''
+	workload = AzureW2017(NEW_CONTAINERS, 1.5)
 	
 	# Initialize scheduler
 	''' Can be LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI (arg = 'energy_latency_'+str(HOSTS)) '''
@@ -145,8 +147,8 @@ def saveStats(stats, datacenter, workload, env, end=True):
 	if not os.path.exists("logs"): os.mkdir("logs")
 	if os.path.exists(dirname): shutil.rmtree(dirname, ignore_errors=True)
 	os.mkdir(dirname)
-	stats.generateDatasets(dirname)
 	if not end: return
+	stats.generateDatasets(dirname)
 	stats.generateGraphs(dirname)
 	# stats.generateCompleteDatasets(dirname)
 	stats.env, stats.workload, stats.datacenter, stats.scheduler = None, None, None, None

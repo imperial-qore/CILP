@@ -163,6 +163,7 @@ class Stats():
 			 'added', 'time']):
 			metric_with_interval = [self.metrics[i][metric] for i in range(len(self.metrics))] if metric != 'waittime' and metric != 'cost' else \
 				[sum(self.metrics[i][metric]) for i in range(len(self.metrics))]
+			metric_with_interval = np.abs(metric_with_interval)
 			axes[i].plot(x, metric_with_interval)
 			axes[i].set_ylabel(metric, fontsize=5)
 			axes[i].grid(b=True, which='both', color='#eeeeee', linestyle='-')

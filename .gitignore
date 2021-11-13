@@ -3,7 +3,9 @@ __pycache__/
 .opera/
 *.py[cod]
 *$py.class
-simulator/workload/datasets
+simulator/workload/datasets/bitbrain/
+simulator/workload/datasets/azure_2017/*.csv
+simulator/workload/datasets/azure_2019/*.csv
 scheduler/A2C/dataset
 .vagrant
 framework/agent/DockerImages
