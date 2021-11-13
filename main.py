@@ -25,6 +25,8 @@ from scheduler.MAD_MC_Random import MADMCRScheduler
 from scheduler.LR_MMT_Random import LRMMTRScheduler
 from scheduler.Random_Random_FirstFit import RFScheduler
 from scheduler.Random_Random_LeastFull import RLScheduler
+from scheduler.Threshold_MMT_Random import TMMTRScheduler
+from scheduler.Threshold_MMT_LeastFull import TMMTLScheduler
 from scheduler.RLR_MMT_Random import RLRMMTRScheduler
 from scheduler.Threshold_MC_Random import TMCRScheduler
 from scheduler.Random_Random_Random import RandomScheduler
@@ -38,16 +40,19 @@ from provisioner.Random_Provisioner import RandomProvisioner
 from provisioner.LocalSearchANN import LSANNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
 from provisioner.CILP import CILPProvisioner
+from provisioner.CILP_IL import CILP_ILProvisioner
+from provisioner.CILP_Trans import CILP_TransProvisioner
 
 # Auxiliary imports
 from stats.Stats import *
 from utils.Utils import *
 from pdb import set_trace as bp
+from sys import argv
 
 usage = "usage: python main.py"
 
 # Global constants
-NUM_SIM_STEPS = 100
+NUM_SIM_STEPS = 200
 HOSTS = 10 * 5
 CONTAINERS = HOSTS
 TOTAL_POWER = 1000
@@ -78,11 +83,11 @@ def initalizeEnvironment(environment, logger):
 	
 	# Initialize scheduler
 	''' Can be LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI (arg = 'energy_latency_'+str(HOSTS)) '''
-	scheduler = RLScheduler() # GOBIScheduler('energy_latency_'+str(HOSTS))
+	scheduler = RLScheduler() 
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = CILPProvisioner(datacenter, CONTAINERS)
+	provisioner = eval(argv[1] + 'Provisioner')(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()

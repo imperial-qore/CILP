@@ -184,10 +184,14 @@ class CILPSearch(Opt):
 			oldfitness = newfitness
 			neighbourhood, numadds = self.neighbours(self.decision)
 			if neighbourhood == []: break
+			if np.random.choice([0, 1], p=[0.2, 0.8]): break
 			fitness = []; ls = []
 			for n in neighbourhood:
 				r, newhostips = self.cosimulator(n)
-				_, predfitness = self.model(self.window, self.elem, torch.tensor([sum(newhostips)]))
+				if 'Transformer' in self.model.name:
+					_, predfitness = self.model(self.window, self.elem, torch.tensor([sum(newhostips)]))
+				else:
+					predfitness = self.model(self.window)
 				if self.training:
 					fitness.append(predfitness.item()); 
 					goldfitness = self.evaluatedecision(n)
@@ -202,7 +206,7 @@ class CILPSearch(Opt):
 				plot_accuracies(self.loss_list, base_url, self.model, new=True)
 				save_model(self.model, self.optimizer, self.scheduler, 0, self.loss_list)
 			index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
-				if np.random.random() < 0.9 else np.argmax(fitness)
+				if np.random.random() < 0.2 else np.argmax(fitness)
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
