@@ -7,6 +7,7 @@ class Provisioner():
         self.env = None
         self.datacenter = datacenter
         self.containers = CONTAINERS
+        self.decision = {'remove': [], 'add': []}
 
     def setEnvironment(self, env):
         self.env = env
@@ -16,7 +17,7 @@ class Provisioner():
 
     def provision(self):
         orphaned = []
-        return orphaned
+        return self.decision, orphaned
 
     def removeHost(self, hostID):
         if len(self.env.hostlist) <= 1:

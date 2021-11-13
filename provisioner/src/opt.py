@@ -23,13 +23,13 @@ class Opt:
 			len(self.env.hostlist) - len(decision['remove']) > 60)
 
 	def neighbours(self, decision):
-		neighbours = []
+		neighbours = []; numadds = 0
 		# add host
 		for pmodel in self.allpowermodels:
 			dec = deepcopy(decision)
 			dec['add'].append(pmodel)
 			if self.checkdecision(dec):
-				neighbours.append(dec)
+				neighbours.append(dec); numadds += 1
 		# remove host
 		for hostID in range(len(self.env.hostlist)):
 			dec = deepcopy(decision)
@@ -40,7 +40,7 @@ class Opt:
 			if self.checkdecision(dec):
 				neighbours.append(dec)
 		neighbours.append(deepcopy(decision))
-		return neighbours
+		return neighbours, numadds
 
 	def migrateOrphaned(self, orphaned, inithostid, numnewnodes):
 		indices = list(range(len(self.env.hostlist) + numnewnodes))
@@ -97,6 +97,11 @@ class Opt:
 		# print(decision, ', Cost', cost, ', R', r, ', IPS', capsr, 'Overhead', overhead)
 		return r - 0.5 * cost + 0.4 * capsr - 0.5 * overhead
 
+	def getweights(self, fitness, adds):
+		removes = len(fitness) - adds - 1
+		weights = np.array([0.5 / (adds+1e-4)] * adds + [0.5 / (removes+1e-4)] * removes + [0.5])
+		return weights / np.sum(weights)
+
 class LocalSearch(Opt):
 	def __init__(self, ipsdata, env, maxv):
 		super().__init__(ipsdata, env, maxv)
@@ -106,11 +111,11 @@ class LocalSearch(Opt):
 		for _ in range(50):
 			if newfitness < oldfitness: break
 			oldfitness = newfitness
-			neighbourhood = self.neighbours(self.decision)
+			neighbourhood, numadds = self.neighbours(self.decision)
 			if neighbourhood == []: break
 			fitness = [self.evaluatedecision(n) for n in neighbourhood]
-			if random.choice([0, 1]): break
-			index = np.random.choice(list(range(len(fitness)))) if np.random.random() < 0.8 else np.argmax(fitness)
+			index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
+				if np.random.random() < 0.4 else np.argmax(fitness)
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
@@ -127,11 +132,12 @@ class ACO(Opt):
 			for ant in range(self.n):
 				if newfitness[ant] < oldfitness[ant]: continue
 				oldfitness[ant] = newfitness[ant]
-				neighbourhood = self.neighbours(self.decisions[ant])
+				neighbourhood, numadds = self.neighbours(self.decisions[ant])
 				if neighbourhood == []: continue
 				fitness = [self.evaluatedecision(n) for n in neighbourhood]
 				if random.choice([0, 1]): continue
-				index = np.random.choice(list(range(len(fitness)))) if np.random.random() < 0.8 else np.argmax(fitness)
+				index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
+					if np.random.random() < 0.4 else np.argmax(fitness)
 				self.decisions[ant] = neighbourhood[index]
 				newfitness[ant] = fitness[index]
 		return self.decisions[np.argmax(newfitness)]

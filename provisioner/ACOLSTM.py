@@ -67,4 +67,4 @@ class ACOLSTMProvisioner(Provisioner):
 		for removeID in indices:
 			orphaned = self.removeHost(removeID)
 		self.migrateOrphaned(orphaned)
-		return orphaned
+		return decision, orphaned

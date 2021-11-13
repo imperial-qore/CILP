@@ -33,7 +33,7 @@ from scheduler.GA import GAScheduler
 from scheduler.GOBI import GOBIScheduler
 
 # Provisioner imports
-from provisioner.Provisioner import *
+from provisioner.Provisioner import Provisioner
 from provisioner.Random_Provisioner import RandomProvisioner
 from provisioner.LocalSearchANN import LSANNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
@@ -81,7 +81,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = ACOLSTMProvisioner(datacenter, CONTAINERS)
+	provisioner = LSANNProvisioner(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()
@@ -102,12 +102,12 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize stats
 	stats = Stats(env, workload, datacenter, scheduler)
-	stats.saveStats(deployed, migrations, [], deployed, decision, schedulingTime)
+	stats.saveStats(deployed, migrations, [], deployed, decision, provisioner.decision, schedulingTime)
 	return datacenter, workload, scheduler, provisioner, env, stats
 
 def stepSimulation(workload, scheduler, provisioner, env, stats):
 	newcontainerinfos = workload.generateNewContainers(env.interval) # New containers info
-	orphaned = provisioner.provision()
+	pdecision, orphaned = provisioner.provision()
 	deployed, destroyed = env.addContainers(newcontainerinfos) # Deploy new containers and get container IDs
 	start = time()
 	selected = scheduler.selection() # Select container IDs for migration
@@ -124,7 +124,7 @@ def stepSimulation(workload, scheduler, provisioner, env, stats):
 	print("Num Hosts:", len(env.hostlist))
 	printDecisionAndMigrations(decision, migrations)
 
-	stats.saveStats(deployed, migrations, destroyed, selected, decision, schedulingTime)
+	stats.saveStats(deployed, migrations, destroyed, selected, decision, pdecision, schedulingTime)
 
 def saveStats(stats, datacenter, workload, env, end=True):
 	dirname = "logs/" + datacenter.__class__.__name__

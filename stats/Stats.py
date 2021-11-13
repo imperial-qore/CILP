@@ -85,7 +85,7 @@ class Stats():
 		containerinfo['active'] = [(c.active) for c in allCreatedContainers]
 		self.allcontainerinfo.append(containerinfo)
 
-	def saveMetrics(self, destroyed, migrations):
+	def saveMetrics(self, destroyed, migrations, pdecision):
 		metrics = dict()
 		metrics['interval'] = self.env.interval
 		metrics['numdestroyed'] = len(destroyed)
@@ -102,6 +102,8 @@ class Stats():
 		metrics['waittime'] = [c.startAt - c.createAt for c in destroyed]
 		metrics['util'] = [host.getCPU()/100 for host in self.env.hostlist]
 		metrics['cost'] = [self.costs[host.powermodel.__class__.__name__] for host in self.env.hostlist]
+		metrics['added'] = len(pdecision['add'])
+		metrics['time'] = sum([(1 if 'B2s' in m else 2 if 'B4ms' in m else 4) for m in pdecision['add']])
 		self.metrics.append(metrics)
 
 	def saveSchedulerInfo(self, selectedcontainers, decision, schedulingtime):
@@ -115,12 +117,12 @@ class Stats():
 			schedulerinfo['migrationTime'] = self.env.intervalAllocTimings[-1]
 		self.schedulerinfo.append(schedulerinfo)
 
-	def saveStats(self, deployed, migrations, destroyed, selectedcontainers, decision, schedulingtime):	
+	def saveStats(self, deployed, migrations, destroyed, selectedcontainers, decision, pdecision, schedulingtime):	
 		self.saveHostInfo()
 		self.saveWorkloadInfo(deployed, migrations)
 		self.saveContainerInfo()
 		self.saveAllContainerInfo()
-		self.saveMetrics(destroyed, migrations)
+		self.saveMetrics(destroyed, migrations, pdecision)
 		self.saveSchedulerInfo(selectedcontainers, decision, schedulingtime)
 
 	########################################################################################################
@@ -149,14 +151,16 @@ class Stats():
 		plt.savefig(dirname + '/' + title + '.pdf')
 
 	def generateMetricsWithInterval(self, dirname):
-		fig, axes = plt.subplots(10, 1, sharex=True, figsize=(4, 6))
 		x = list(range(len(self.metrics)))
 		res = {}; table = []
 		labels = ['Total Containers Run', 'Number of Migrations', 'Energy per interval', 'Response Time per interval',\
 			'Migration Time per interval', 'SLA Violations per interval', 'SLA Violations (%) per interval', \
-			'Waiting Time per interval', 'Energy per container per interval', 'Cost (USD) per interval', 'Utilization Ratio']
+			'Waiting Time per interval', 'Energy per container per interval', 'Cost (USD) per interval', \
+			'Number of Provisions', 'Provisioning Overhead (B2s time)', 'Utilization Ratio']
+		fig, axes = plt.subplots(len(labels), 1, sharex=True, figsize=(4, 6))
 		for i,metric in enumerate(['numdestroyed', 'nummigrations', 'energytotalinterval', 'avgresponsetime',\
-			 'avgmigrationtime', 'slaviolations', 'slaviolationspercentage', 'waittime', 'energypercontainerinterval', 'cost']):
+			 'avgmigrationtime', 'slaviolations', 'slaviolationspercentage', 'waittime', 'energypercontainerinterval', 'cost',\
+			 'added', 'time']):
 			metric_with_interval = [self.metrics[i][metric] for i in range(len(self.metrics))] if metric != 'waittime' and metric != 'cost' else \
 				[sum(self.metrics[i][metric]) for i in range(len(self.metrics))]
 			axes[i].plot(x, metric_with_interval)
@@ -231,7 +235,7 @@ class Stats():
 		df.to_csv(dirname + '/' + title + '.csv' , header=False, index=False)
 
 	def generateGraphs(self, dirname):
-		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'cpu')
+		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'cpu')
 		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'numcontainers')
 		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'power')
 		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'baseips', 'apparentips')
