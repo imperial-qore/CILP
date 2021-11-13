@@ -36,6 +36,7 @@ from scheduler.GOBI import GOBIScheduler
 from provisioner.Provisioner import *
 from provisioner.Random_Provisioner import RandomProvisioner
 from provisioner.LocalSearchANN import LSANNProvisioner
+from provisioner.ACOLSTM import ACOLSTMProvisioner
 
 # Auxiliary imports
 from stats.Stats import *
@@ -80,7 +81,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = LSANNProvisioner(datacenter, CONTAINERS)
+	provisioner = ACOLSTMProvisioner(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()

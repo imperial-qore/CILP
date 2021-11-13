@@ -114,4 +114,24 @@ class LocalSearch(Opt):
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
-		
+
+class ACO(Opt):
+	def __init__(self, ipsdata, env, maxv):
+		super().__init__(ipsdata, env, maxv)
+		self.n = 5
+
+	def search(self):
+		oldfitness = [0] * self.n; newfitness = [1] * self.n
+		self.decisions = [{'remove': [], 'add': []} for _ in range(self.n)]
+		for _ in range(50):
+			for ant in range(self.n):
+				if newfitness[ant] < oldfitness[ant]: continue
+				oldfitness[ant] = newfitness[ant]
+				neighbourhood = self.neighbours(self.decisions[ant])
+				if neighbourhood == []: continue
+				fitness = [self.evaluatedecision(n) for n in neighbourhood]
+				if random.choice([0, 1]): continue
+				index = np.random.choice(list(range(len(fitness)))) if np.random.random() < 0.8 else np.argmax(fitness)
+				self.decisions[ant] = neighbourhood[index]
+				newfitness[ant] = fitness[index]
+		return self.decisions[np.argmax(newfitness)]

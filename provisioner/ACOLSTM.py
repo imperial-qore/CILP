@@ -3,11 +3,11 @@ from .src.utils import *
 from .src.opt import *
 from simulator.environment.AzureFog import *
 
-class LSANNProvisioner(Provisioner):
+class ACOLSTMProvisioner(Provisioner):
 	def __init__(self, datacenter, CONTAINERS):
 		super().__init__(datacenter, CONTAINERS)
-		self.model_name = 'Attention'
-		self.search = LocalSearch
+		self.model_name = 'LSTM_AD'
+		self.search = ACO
 		self.model_loaded = False
 		self.window_buffer = []
 		self.window = None
