@@ -2,8 +2,8 @@ from .Provisioner import *
 import random
 
 class RandomProvisioner(Provisioner):
-	def __init__(self, datacenter):
-		super().__init__(datacenter)
+	def __init__(self, datacenter, CONTAINERS):
+		super().__init__(datacenter, CONTAINERS)
 
 	def prediction(self):
 		pass

@@ -15,7 +15,7 @@ class AzureFog():
 		self.types = {
 			'B2s':
 				{
-					'IPS': 4029,
+					'IPS': 2019,
 					'RAMSize': 4295,
 					'RAMRead': 372.0,
 					'RAMWrite': 200.0,

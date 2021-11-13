@@ -221,50 +221,36 @@ class Stats():
 		if objfunc2: df = pd.concat([df, pd.DataFrame(objfunc2_with_interval)], axis=1)
 		df.to_csv(dirname + '/' + title + '.csv' , header=False, index=False)
 
-	def generateDatasetWithInterval2(self, dirname, metric, metric2, metric3, metric4, objfunc, objfunc2):
-		title = metric + '_' + metric2 + '_'  + metric3 + '_'  + metric4 + '_'  +objfunc + '_' + objfunc2 + '_' + 'with_interval' 
-		totalIntervals = len(self.hostinfo)
-		metric_with_interval = []; metric2_with_interval = [] 
-		metric3_with_interval = []; metric4_with_interval = []
-		host_alloc_with_interval = []; objfunc2_with_interval = []
-		objfunc_with_interval = []
+	def generateDatasetWithInterval2(self, dirname, metric):
+		title = metric + '_' + 'with_interval' 
+		totalIntervals = len(self.activecontainerinfo)
+		metric_with_interval = []
 		for interval in range(totalIntervals-1):
-			metric_with_interval.append([self.hostinfo[interval][metric][hostID] for hostID in range(len(self.hostinfo[0][metric]))])
-			host_alloc_with_interval.append([self.activecontainerinfo[interval]['hostalloc'][cID] for cID in range(len(self.activecontainerinfo[0]['hostalloc']))])
-			objfunc_with_interval.append(self.metrics[interval+1][objfunc])
-			metric2_with_interval.append(self.activecontainerinfo[interval][metric2])
-			metric3_with_interval.append(self.metrics[interval][metric3])
-			metric4_with_interval.append(self.metrics[interval][metric4])
-			objfunc2_with_interval.append(self.metrics[interval+1][objfunc2])
+			metric_with_interval.append([self.activecontainerinfo[interval][metric][cid] for cid in range(len(self.activecontainerinfo[0][metric]))])
 		df = pd.DataFrame(metric_with_interval)
-		df = pd.concat([df, pd.DataFrame(metric2_with_interval)], axis=1)
-		df = pd.concat([df, pd.DataFrame(host_alloc_with_interval)], axis=1)
-		df = pd.concat([df, pd.DataFrame(metric3_with_interval)], axis=1)
-		df = pd.concat([df, pd.DataFrame(metric4_with_interval)], axis=1)
-		df = pd.concat([df, pd.DataFrame(objfunc_with_interval)], axis=1)
-		df = pd.concat([df, pd.DataFrame(objfunc2_with_interval)], axis=1)
 		df.to_csv(dirname + '/' + title + '.csv' , header=False, index=False)
 
 	def generateGraphs(self, dirname):
-		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'cpu')
-		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'numcontainers')
-		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'power')
-		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'baseips', 'apparentips')
-		self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'ipscap', 'apparentips')
-		self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'ips', 'apparentips')
-		self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'hostalloc')
+		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'cpu')
+		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'numcontainers')
+		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'power')
+		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'baseips', 'apparentips')
+		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'ipscap', 'apparentips')
+		# self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'ips', 'apparentips')
+		# self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'hostalloc')
 		self.generateMetricsWithInterval(dirname)
-		self.generateWorkloadWithInterval(dirname)
+		# self.generateWorkloadWithInterval(dirname)
 
 	def generateDatasets(self, dirname):
 		# self.generateDatasetWithInterval(dirname, 'cpu', objfunc='energytotalinterval')
 		# self.generateDatasetWithInterval(dirname, 'cpu', metric2='apparentips', objfunc='energytotalinterval', objfunc2='avgresponsetime')
-		pass
+		self.generateDatasetWithInterval2(dirname, 'apparentips')
 
 	def generateCompleteDatasets(self, dirname):
-		self.generateCompleteDataset(dirname, self.hostinfo, 'hostinfo')
-		self.generateCompleteDataset(dirname, self.workloadinfo, 'workloadinfo')
-		self.generateCompleteDataset(dirname, self.metrics, 'metrics')
-		self.generateCompleteDataset(dirname, self.activecontainerinfo, 'activecontainerinfo')
-		self.generateCompleteDataset(dirname, self.allcontainerinfo, 'allcontainerinfo')
-		self.generateCompleteDataset(dirname, self.schedulerinfo, 'schedulerinfo')
+		# self.generateCompleteDataset(dirname, self.hostinfo, 'hostinfo')
+		# self.generateCompleteDataset(dirname, self.workloadinfo, 'workloadinfo')
+		# self.generateCompleteDataset(dirname, self.metrics, 'metrics')
+		# self.generateCompleteDataset(dirname, self.activecontainerinfo, 'activecontainerinfo')
+		# self.generateCompleteDataset(dirname, self.allcontainerinfo, 'allcontainerinfo')
+		# self.generateCompleteDataset(dirname, self.schedulerinfo, 'schedulerinfo')
+		pass

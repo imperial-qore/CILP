@@ -172,7 +172,8 @@ class Scheduler():
         for cid in containerIDs:
             leastFullHost = min(hostIPSs)
             decision.append((cid, leastFullHost[1]))
-            hostIPSs.remove(leastFullHost)
+            if len(hostIPSs) > 1:
+                hostIPSs.remove(leastFullHost)
         return decision
 
     def MaxFullPlacement(self, containerIDs):
@@ -181,5 +182,6 @@ class Scheduler():
         for cid in containerIDs:
             maxFullHost = max(hostIPSs)
             decision.append((cid, maxFullHost[1]))
-            hostIPSs.remove(maxFullHost)
+            if len(hostIPSs) > 1:
+                hostIPSs.remove(leastFullHost)
         return decision

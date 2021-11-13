@@ -3,9 +3,10 @@ import numpy as np
 import random
 
 class Provisioner():
-    def __init__(self, datacenter):
+    def __init__(self, datacenter, CONTAINERS):
         self.env = None
         self.datacenter = datacenter
+        self.containers = CONTAINERS
 
     def setEnvironment(self, env):
         self.env = env

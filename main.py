@@ -35,6 +35,7 @@ from scheduler.GOBI import GOBIScheduler
 # Provisioner imports
 from provisioner.Provisioner import *
 from provisioner.Random_Provisioner import RandomProvisioner
+from provisioner.LocalSearchANN import LSANNProvisioner
 
 # Auxiliary imports
 from stats.Stats import *
@@ -79,7 +80,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = RandomProvisioner(datacenter)
+	provisioner = LSANNProvisioner(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()
@@ -138,21 +139,10 @@ def saveStats(stats, datacenter, workload, env, end=True):
 	if os.path.exists(dirname): shutil.rmtree(dirname, ignore_errors=True)
 	os.mkdir(dirname)
 	stats.generateDatasets(dirname)
-	if 'Datacenter' in datacenter.__class__.__name__:
-		saved_env, saved_workload, saved_datacenter, saved_scheduler, saved_sim_scheduler = stats.env, stats.workload, stats.datacenter, stats.scheduler, stats.simulated_scheduler
-		stats.env, stats.workload, stats.datacenter, stats.scheduler, stats.simulated_scheduler = None, None, None, None, None
-		with open(dirname + '/' + dirname.split('/')[1] +'.pk', 'wb') as handle:
-		    pickle.dump(stats, handle)
-		stats.env, stats.workload, stats.datacenter, stats.scheduler, stats.simulated_scheduler = saved_env, saved_workload, saved_datacenter, saved_scheduler, saved_sim_scheduler
 	if not end: return
 	stats.generateGraphs(dirname)
-	stats.generateCompleteDatasets(dirname)
+	# stats.generateCompleteDatasets(dirname)
 	stats.env, stats.workload, stats.datacenter, stats.scheduler = None, None, None, None
-	if 'Datacenter' in datacenter.__class__.__name__:
-		stats.simulated_scheduler = None
-		logger.getLogger().handlers.clear(); env.logger.getLogger().handlers.clear()
-		if os.path.exists(dirname+'/'+logFile): os.remove(dirname+'/'+logFile)
-		rename(logFile, dirname+'/'+logFile)
 	with open(dirname + '/' + dirname.split('/')[1] +'.pk', 'wb') as handle:
 	    pickle.dump(stats, handle)
 
@@ -163,5 +153,6 @@ if __name__ == '__main__':
 	for step in range(NUM_SIM_STEPS):
 		print(color.BOLD+"Simulation Interval:", step, color.ENDC)
 		stepSimulation(workload, scheduler, provisioner, env, stats)
+		saveStats(stats, datacenter, workload, env, False)
 
 	saveStats(stats, datacenter, workload, env)
