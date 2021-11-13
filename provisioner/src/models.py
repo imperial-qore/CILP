@@ -47,3 +47,57 @@ class LSTM_AD(nn.Module):
 			out, hidden = self.lstm(g.view(1, 1, -1), hidden)
 			out = self.fcn(out.view(-1))
 		return out
+
+## Simple Transformer Model
+class Transformer(nn.Module):
+	def __init__(self, feats):
+		super(Transformer, self).__init__()
+		self.name = 'Transformer'
+		self.lr = 0.001
+		self.n_feats = feats
+		self.n_window = 10
+		self.n = self.n_feats * self.n_window
+		self.pos_encoder = PositionalEncoding(feats, 0.1, self.n_window)
+		encoder_layers = TransformerEncoderLayer(d_model=feats, nhead=feats, dim_feedforward=16, dropout=0.1)
+		self.transformer_encoder = TransformerEncoder(encoder_layers, 1)
+		decoder_layers = TransformerDecoderLayer(d_model=feats, nhead=feats, dim_feedforward=16, dropout=0.1)
+		self.transformer_decoder = TransformerDecoder(decoder_layers, 1)
+		self.fcn = nn.Sigmoid()
+
+	def forward(self, src, tgt):
+		src = src * math.sqrt(self.n_feats)
+		src = self.pos_encoder(src)
+		memory = self.transformer_encoder(src)
+		x = self.transformer_decoder(tgt, memory)
+		x = self.fcn(x)
+		return x
+
+## CILP Model
+class CILP(nn.Module):
+	def __init__(self, feats):
+		super(CILP, self).__init__()
+		self.name = 'CILP'
+		self.lr = 0.001
+		self.n_feats = feats
+		self.n_window = 10
+		self.n = self.n_feats * self.n_window
+		self.pos_encoder = PositionalEncoding(feats, 0.1, self.n_window)
+		encoder_layers = TransformerEncoderLayer(d_model=feats, nhead=feats, dim_feedforward=16, dropout=0.1)
+		self.transformer_encoder = TransformerEncoder(encoder_layers, 1)
+		decoder_layers = TransformerDecoderLayer(d_model=feats, nhead=feats, dim_feedforward=16, dropout=0.1)
+		self.transformer_decoder = TransformerDecoder(decoder_layers, 1)
+		self.fcn = nn.Sigmoid()
+		self.likelihood = nn.Sequential(nn.Linear(self.n + 1, 1), nn.Sigmoid())
+
+	def predwindow(self, src, tgt):
+		src = src * math.sqrt(self.n_feats)
+		src = self.pos_encoder(src)
+		memory = self.transformer_encoder(src)
+		x = self.transformer_decoder(tgt, memory)
+		x = self.fcn(x)
+		return memory, x
+
+	def forward(self, src, tgt, hw):
+		memory, x = self.predwindow(src, tgt)
+		score = self.likelihood(torch.cat((hw, memory.view(-1))))
+		return x, score

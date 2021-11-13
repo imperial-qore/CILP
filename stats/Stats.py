@@ -179,6 +179,7 @@ class Stats():
 		table.append([labels[-1], "{:.4f}".format(avg) + u"\u00B1" + f' {"{:.4f}".format(std)}'])
 		print(tabulate(table, headers=['Metric', 'Value'], tablefmt='orgtbl'))
 		print('Average energy (sum energy interval / sum numdestroyed) :', res['energytotalinterval']/res['numdestroyed']/10e6)
+		print('Average cost (sum cost interval / sum numdestroyed) :', res['cost']/res['numdestroyed'])
 		plt.tight_layout(pad=0)
 		plt.savefig(dirname + '/' + 'Metrics' + '.pdf')
 

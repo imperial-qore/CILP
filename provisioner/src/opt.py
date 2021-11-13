@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 import random
 from .constants import *
+from .utils import *
 
 class Opt:
 	def __init__(self, ipsdata, env, maxv):
@@ -141,3 +142,67 @@ class ACO(Opt):
 				self.decisions[ant] = neighbourhood[index]
 				newfitness[ant] = fitness[index]
 		return self.decisions[np.argmax(newfitness)]
+
+class CILPSearch(Opt):
+	def __init__(self, ipsdata, env, maxv, window_buffer, host_util, model, optimizer, scheduler, loss_list, training):
+		super().__init__(ipsdata, env, maxv)
+		self.window_buffer = window_buffer
+		self.model = model
+		self.host_util = host_util
+		self.optimizer, self.loss_list, self.scheduler = optimizer, loss_list, scheduler
+		# Add latest ips data to window
+		self.window_buffer.append(ipsdata)
+		temp = np.array(self.window_buffer)
+		temp = normalize(temp, 0, self.maxv)
+		self.window = convert_to_windows(temp, self.model)[-1]
+		feats = self.window.shape[1]
+		d = self.window[None, :]
+		self.window = d.permute(1, 0, 2)
+		self.elem = self.window[-1, :, :].view(1, 1, feats)
+		self.training = training
+
+	def cosimulator(self, decision):
+		hostips, containerips = deepcopy(self.host_util), self.ipsdata
+		old_hids = list(range(len(hostips)))
+		hostips += [0 for _ in decision['add']]
+		ipscaps = [host.ipsCap for host in self.env.hostlist] + [self.ipscaps[nid] for nid in decision['add']]
+		for hid, alloc in decision['remove']:
+			if hid in old_hids: 
+				old_hids.remove(hid)
+				hostips[hid] = 0
+			for c, h in alloc:
+				hostips[h] += containerips[c]
+		r = [hostips[hid] / ipscaps[hid] for hid in range(len(hostips))]
+		return r, hostips
+
+	def search(self):
+		oldfitness, newfitness = 0, 1
+		predold, prednew = 0, 1
+		l = nn.BCELoss()
+		for _ in range(50):
+			if newfitness < oldfitness: break
+			oldfitness = newfitness
+			neighbourhood, numadds = self.neighbours(self.decision)
+			if neighbourhood == []: break
+			fitness = []; ls = []
+			for n in neighbourhood:
+				r, newhostips = self.cosimulator(n)
+				_, predfitness = self.model(self.window, self.elem, torch.tensor([sum(newhostips)]))
+				if self.training:
+					fitness.append(predfitness.item()); 
+					goldfitness = self.evaluatedecision(n)
+					gold = torch.DoubleTensor([0.9]) if goldfitness > oldfitness else torch.DoubleTensor([0.1])
+					print(gold.item(), predfitness)
+					loss = l(predfitness, gold); ls.append(loss.item())
+					self.optimizer.zero_grad(); loss.backward(); self.optimizer.step()
+				else:
+					fitness.append(self.evaluatedecision(n)); 
+			if self.training:
+				self.loss_list.append((np.mean(ls), 0, self.optimizer.param_groups[0]['lr']))
+				plot_accuracies(self.loss_list, base_url, self.model, new=True)
+				save_model(self.model, self.optimizer, self.scheduler, 0, self.loss_list)
+			index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
+				if np.random.random() < 0.9 else np.argmax(fitness)
+			self.decision = neighbourhood[index]
+			newfitness = fitness[index]
+		return self.decision

@@ -71,6 +71,17 @@ def backprop(epoch, model, data, dataO, optimizer, scheduler, training = True):
 			pred = model(d)
 		elif 'Attention' in model.name:
 			pred = model(d)
+		elif 'Transformer' in model.name:
+			d = d[None, :]
+			window = d.permute(1, 0, 2)
+			elem = window[-1, :, :].view(1, 1, feats)
+			pred = model(window, elem).view(-1)
+		elif 'CILP' in model.name:
+			d = d[None, :]
+			window = d.permute(1, 0, 2)
+			elem = window[-1, :, :].view(1, 1, feats)
+			_, pred = model.predwindow(window, elem)
+			pred = pred.view(-1)
 		loss = l(pred, gold)
 		ls.append(torch.mean(loss).item())
 		if training:
@@ -78,7 +89,7 @@ def backprop(epoch, model, data, dataO, optimizer, scheduler, training = True):
 	if training: scheduler.step()
 	return np.mean(ls), optimizer.param_groups[0]['lr']
 
-def plot_accuracies(loss_list, folder, model):
+def plot_accuracies(loss_list, folder, model, new=False):
 	os.makedirs(f'{folder}/plots/', exist_ok=True)
 	trainAcc = [i[0] for i in loss_list]
 	testAcc = [i[1] for i in loss_list]
@@ -89,7 +100,8 @@ def plot_accuracies(loss_list, folder, model):
 	plt.plot(range(len(testAcc)), testAcc, label='Average Testing Loss', color='b', linewidth=1, linestyle='dashed', marker='.')
 	plt.twinx()
 	plt.plot(range(len(lrs)), lrs, label='Learning Rate', color='r', linewidth=1, linestyle='dotted', marker='.')
-	plt.savefig(f'{folder}/plots/{model.name}.pdf')
+	cnew = '_online' if new else ''
+	plt.savefig(f'{folder}/plots/{model.name}{cnew}.pdf')
 	plt.clf()
 
 def freeze(model):

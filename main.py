@@ -37,6 +37,7 @@ from provisioner.Provisioner import Provisioner
 from provisioner.Random_Provisioner import RandomProvisioner
 from provisioner.LocalSearchANN import LSANNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
+from provisioner.CILP import CILPProvisioner
 
 # Auxiliary imports
 from stats.Stats import *
@@ -81,7 +82,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = LSANNProvisioner(datacenter, CONTAINERS)
+	provisioner = CILPProvisioner(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()
