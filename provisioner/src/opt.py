@@ -114,4 +114,4 @@ class LocalSearch(Opt):
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
-
+		
