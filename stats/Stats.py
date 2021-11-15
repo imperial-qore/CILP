@@ -177,7 +177,7 @@ class Stats():
 			table.append([labels[i], "{:.4f}".format(avg) + u" \u00B1" + f' {"{:.4f}".format(std)}'])
 		metric_with_interval = [sum(self.hostinfo[i]['apparentips']) / sum(self.hostinfo[i]['ipscap']) for i in range(len(self.hostinfo))]
 		avg = np.average(metric_with_interval); std = np.std(metric_with_interval)
-		table.append([labels[-1], "{:.4f}".format(avg) + u"\u00B1" + f' {"{:.4f}".format(std)}'])
+		table.append([labels[-1], "{:.4f}".format(avg) + u" \u00B1" + f' {"{:.4f}".format(std)}'])
 		print(tabulate(table, headers=['Metric', 'Value'], tablefmt='orgtbl'))
 		print('Average energy (sum energy interval / sum numdestroyed) :', res['energytotalinterval']/res['numdestroyed']/10e6)
 		print('Average cost (sum cost interval / sum numdestroyed) :', res['cost']/res['numdestroyed'])
