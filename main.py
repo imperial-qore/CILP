@@ -97,7 +97,7 @@ def initalizeEnvironment(environment, logger):
 	scheduler = RLScheduler() 
 
 	# Initialize provisioner
-	''' Can be  '''
+	''' Can be CILP, ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS '''
 	provisioner = eval(args.provisioner + 'Provisioner')(datacenter, CONTAINERS)
 
 	# Initialize Environment
