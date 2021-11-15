@@ -53,8 +53,15 @@ from stats.Stats import *
 from utils.Utils import *
 from pdb import set_trace as bp
 from sys import argv
+import argparse
 
-usage = "usage: python main.py"
+usage = "usage: python main.py -provisioner <provisioner> -workload <workload>"
+parser = argparse.ArgumentParser(usage=usage)
+parser.add_argument('--provisioner', 
+                    help='Name of provisioner. One of ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS, or CILP, CILP_IL, CILP_Trans.')
+parser.add_argument('--workload', 
+                    help='Name of workload. One of Azure2017, Azure2019 or Bitbrain.')
+args = parser.parse_args()
 
 # Global constants
 NUM_SIM_STEPS = 200
@@ -82,8 +89,8 @@ def initalizeEnvironment(environment, logger):
 	datacenter = AzureFog(HOSTS)
 
 	# Initialize workload
-	''' Can be BWGD2, AzureW2017, AzureW2019 '''
-	workload = AzureW2017(NEW_CONTAINERS, 1.5)
+	''' Can be Bitbrain, Azure2017, Azure2019 '''
+	workload = eval(args.workload + 'Workload')(NEW_CONTAINERS, 1.5)
 	
 	# Initialize scheduler
 	''' Can be LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI (arg = 'energy_latency_'+str(HOSTS)) '''
@@ -91,7 +98,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be  '''
-	provisioner = eval(argv[1] + 'Provisioner')(datacenter, CONTAINERS)
+	provisioner = eval(args.provisioner + 'Provisioner')(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()

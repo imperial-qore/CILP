@@ -30,7 +30,7 @@ def createfiles(df):
 		trace = trace[:reqlen]
 		pd.DataFrame(trace).to_csv(f'simulator/workload/datasets/azure_2019/{i}.csv', header=False, index=False)
 
-class AzureW2019(Workload):
+class Azure2019Workload(Workload):
 	def __init__(self, meanNumContainers, sigmaNumContainers):
 		super().__init__()
 		self.mean = meanNumContainers * 1.5
