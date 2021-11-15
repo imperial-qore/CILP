@@ -3,44 +3,28 @@ from .src.utils import *
 from .src.opt import *
 from simulator.environment.AzureFog import *
 
-class LSANNProvisioner(Provisioner):
+class ACOARIMAProvisioner(Provisioner):
 	def __init__(self, datacenter, CONTAINERS):
 		super().__init__(datacenter, CONTAINERS)
-		self.model_name = 'Attention'
-		self.search = LocalSearch
+		self.search = ACO
 		self.model_loaded = False
 		self.window_buffer = []
 		self.window = None
 		self.load_model()
 
 	def load_model(self):
-		# Load model
-		self.model, optimizer, scheduler, epoch, loss_list = load_model(self.model_name, self.containers)
-		# Load dataset
-		trainO, testO, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
-		trainD, testD = convert_to_windows(trainO, self.model), convert_to_windows(testO, self.model)
-		# Train model
-		if epoch == -1:
-			for e in tqdm(list(range(epoch+1, epoch+num_epochs+1))):
-				lossT, lr = backprop(e, self.model, trainD, trainO, optimizer, scheduler)
-				lossTest, _ = backprop(e, self.model, testD, testO, optimizer, scheduler, False)
-				loss_list.append((lossT, lossTest, lr))
-				tqdm.write(f'Epoch {e},\tTrain Loss = {lossT},\tTest loss = {lossTest}')
-				plot_accuracies(loss_list, base_url, self.model)
-			save_model(self.model, optimizer, scheduler, e, loss_list)
-		# Freeze encoder
-		freeze(self.model); self.model_loaded = True
+		dataset, _, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
+		self.model_loaded = True
 
 	def updateBuffer(self):
 		ips_data = [c.getApparentIPS() if c else self.minv for c in self.env.containerlist]
-		self.window_buffer.append(ips_data)
-		temp = np.array(self.window_buffer)
+		temp = np.array(ips_data)
 		temp = normalize(temp, self.minv, self.maxv)
-		self.window = convert_to_windows(temp, self.model)[-1]
+		self.window = temp
 
 	def prediction(self):
 		self.updateBuffer()
-		pred = self.model(self.window)
+		pred = self.window
 		pred = denormalize(pred, self.minv, self.maxv)
 		return pred.tolist()
 

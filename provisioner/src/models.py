@@ -7,6 +7,7 @@ from torch.nn import TransformerEncoder
 from torch.nn import TransformerDecoder
 from .dlutils import *
 from .constants import *
+from .npn import *
 torch.manual_seed(1)
 
 ## Simple Self-Attention Model
@@ -28,6 +29,28 @@ class Attention(nn.Module):
 			ats = at(g.view(-1)).reshape(self.n_feats, self.n_feats)
 			g = torch.matmul(g, ats)		
 		return self.fcn(g.view(-1))
+
+## Simple NPN based stochastic model
+class NPN(nn.Module):
+	def __init__(self, feats):
+		super(NPN, self).__init__()
+		self.name = 'NPN'
+		self.lr = 0.002
+		self.n_feats = feats
+		self.n_window = 5 # MHA w_size = 5
+		self.n = self.n_feats * self.n_window
+		self.fcn = nn.Sequential( 
+			NPNLinear(self.n, feats, False), 
+			NPNRelu(),
+			NPNLinear(feats, feats),
+			NPNRelu(),
+			NPNLinear(feats, feats),
+			NPNSigmoid())
+
+	def forward(self, g):
+		x = g.reshape(1, -1)
+		x, s = self.fcn(x)
+		return x, s
 
 ## LSTM_AD Model
 class LSTM_AD(nn.Module):

@@ -1,56 +1,52 @@
 from .Provisioner import *
 from .src.utils import *
 from .src.opt import *
-from scheduler.HGP.train import *
 from simulator.environment.AzureFog import *
 
-class UAHSProvisioner(Provisioner):
+class DecisionNNProvisioner(Provisioner):
 	def __init__(self, datacenter, CONTAINERS):
 		super().__init__(datacenter, CONTAINERS)
 		self.model_name = 'Attention'
-		self.search = StochasticSearch
+		self.search = LocalSearch
 		self.model_loaded = False
 		self.window_buffer = []
 		self.window = None
 		self.load_model()
 
 	def load_model(self):
-		# Load dataset
-		dataset, _, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
 		# Load model
-		X = np.array([np.array(i).reshape(-1) for i in dataset])
-		y = np.roll(X, 1, axis=0); 
-		kernel_hetero = C(1.0, (1e-10, 1000)) * RBF(1, (0.01, 100.0)) 
-		self.model = GaussianProcessRegressor(kernel=kernel_hetero, alpha=0)
-		file_path = base_url + f'checkpoints/UAHS.pt'
-		if os.path.exists(file_path):
-			print(color.GREEN+"Loading pre-trained model: UAHS"+color.ENDC)
-			with open(file_path, 'rb') as f:
-				self.model = pickle.load(f)
-		else:
-			print(color.GREEN+"Creating new model: UAHS"+color.ENDC)
-			self.model = self.model.fit(X, y)
-			with open(file_path, 'wb') as f:
-				pickle.dump(self.model, f)
-		print("Heteroscedastic kernel: %s" % self.model.kernel_)
-		print("Heteroscedastic LML: %.3f" % self.model.log_marginal_likelihood(self.model.kernel_.theta))
-		self.model_loaded = True
+		self.model, optimizer, scheduler, epoch, loss_list = load_model(self.model_name, self.containers)
+		# Load dataset
+		trainO, testO, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
+		trainD, testD = convert_to_windows(trainO, self.model), convert_to_windows(testO, self.model)
+		# Train model
+		if epoch == -1:
+			for e in tqdm(list(range(epoch+1, epoch+num_epochs+1))):
+				lossT, lr = backprop(e, self.model, trainD, trainO, optimizer, scheduler)
+				lossTest, _ = backprop(e, self.model, testD, testO, optimizer, scheduler, False)
+				loss_list.append((lossT, lossTest, lr))
+				tqdm.write(f'Epoch {e},\tTrain Loss = {lossT},\tTest loss = {lossTest}')
+				plot_accuracies(loss_list, base_url, self.model)
+			save_model(self.model, optimizer, scheduler, e, loss_list)
+		# Freeze encoder
+		freeze(self.model); self.model_loaded = True
 
 	def updateBuffer(self):
 		ips_data = [c.getApparentIPS() if c else self.minv for c in self.env.containerlist]
-		temp = np.array(ips_data)
+		self.window_buffer.append(ips_data)
+		temp = np.array(self.window_buffer)
 		temp = normalize(temp, self.minv, self.maxv)
-		self.window = temp
+		self.window = convert_to_windows(temp, self.model)[-1]
 
 	def prediction(self):
 		self.updateBuffer()
-		pred, std = self.model.predict(self.window.reshape(1, -1), return_std=True)
-		pred = denormalize(pred, self.minv, self.maxv)[0]
-		return pred, std[0]
+		pred = self.model(self.window)
+		pred = denormalize(pred, self.minv, self.maxv)
+		return pred.tolist()
 
 	def provision(self):
-		predips, stdips = self.prediction()
-		opt = self.search(predips, stdips, self.env, self.maxv)
+		predips = self.prediction()
+		opt = self.search(predips, self.env, self.maxv)
 		decision = opt.search()
 		print(decision)
 		for add in decision['add']:

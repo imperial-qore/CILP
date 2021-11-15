@@ -143,7 +143,7 @@ class ACO(Opt):
 				newfitness[ant] = fitness[index]
 		return self.decisions[np.argmax(newfitness)]
 
-class UAHSSearch(Opt):
+class StochasticSearch(Opt):
 	def __init__(self, ipsdata, stddata, env, maxv):
 		super().__init__(ipsdata, env, maxv)
 		self.stddata = np.array(stddata)

@@ -69,20 +69,26 @@ def backprop(epoch, model, data, dataO, optimizer, scheduler, training = True):
 		gold = data[i+1][-1] if i+1 < data.shape[0] else data[i][-1]
 		if 'LSTM' in model.name:
 			pred = model(d)
+			loss = l(pred, gold)
 		elif 'Attention' in model.name:
 			pred = model(d)
+			loss = l(pred, gold)
 		elif 'Transformer' in model.name:
 			d = d[None, :]
 			window = d.permute(1, 0, 2)
 			elem = window[-1, :, :].view(1, 1, feats)
 			pred = model(window, elem).view(-1)
+			loss = l(pred, gold)
+		elif 'NPN' in model.name:
+			pred = model(d)
+			loss = KL_loss(pred, gold)
 		elif 'CILP' in model.name:
 			d = d[None, :]
 			window = d.permute(1, 0, 2)
 			elem = window[-1, :, :].view(1, 1, feats)
 			_, pred = model.predwindow(window, elem)
 			pred = pred.view(-1)
-		loss = l(pred, gold)
+			loss = l(pred, gold)
 		ls.append(torch.mean(loss).item())
 		if training:
 			optimizer.zero_grad(); loss.backward(); optimizer.step()

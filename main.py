@@ -33,15 +33,15 @@ from scheduler.RLR_MMT_Random import RLRMMTRScheduler
 from scheduler.Threshold_MC_Random import TMCRScheduler
 from scheduler.Random_Random_Random import RandomScheduler
 from scheduler.HGP_LBFGS import HGPScheduler
-from scheduler.GA import GAScheduler
-from scheduler.GOBI import GOBIScheduler
 
 # Provisioner imports
 from provisioner.Provisioner import Provisioner
 from provisioner.Random_Provisioner import RandomProvisioner
-from provisioner.LocalSearchANN import LSANNProvisioner
+from provisioner.DecisionNN import DecisionNNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
+from provisioner.ACOARIMA import ACOARIMAProvisioner
 from provisioner.UAHS import UAHSProvisioner
+from provisioner.SemiDirect import SemiDirectProvisioner
 from provisioner.CILP import CILPProvisioner
 from provisioner.CILP_IL import CILP_ILProvisioner
 from provisioner.CILP_Trans import CILP_TransProvisioner
@@ -66,6 +66,9 @@ DB_NAME = ''
 DB_HOST = ''
 DB_PORT = 0
 HOSTS_IP = []
+
+# Proposed: CILP. Ablations: CILP_IL, CILP_Trans
+# Baselines: ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS
 
 def initalizeEnvironment(environment, logger):
 	if environment != '':
