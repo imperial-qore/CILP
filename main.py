@@ -41,6 +41,7 @@ from provisioner.DecisionNN import DecisionNNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
 from provisioner.ACOARIMA import ACOARIMAProvisioner
 from provisioner.UAHS import UAHSProvisioner
+from provisioner.CAHS import CAHSProvisioner
 from provisioner.SemiDirect import SemiDirectProvisioner
 from provisioner.Narya import NaryaProvisioner
 from provisioner.CILP import CILPProvisioner
@@ -69,7 +70,7 @@ DB_PORT = 0
 HOSTS_IP = []
 
 # Proposed: CILP. Ablations: CILP_IL, CILP_Trans
-# Baselines: ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya
+# Baselines: ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS
 
 def initalizeEnvironment(environment, logger):
 	if environment != '':

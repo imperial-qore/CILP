@@ -19,7 +19,7 @@ class UAHSProvisioner(Provisioner):
 		dataset, _, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
 		# Load model
 		X = np.array([np.array(i).reshape(-1) for i in dataset])
-		y = np.roll(X, 1, axis=0); print(X.shape, y.shape)
+		y = np.roll(X, 1, axis=0);
 		kernel_hetero = C(1.0, (1e-10, 1000)) * RBF(0.5, (0.00, 100.0)) 
 		self.model = [GaussianProcessRegressor(kernel=kernel_hetero, alpha=0.01) for _ in range(X.shape[1])]
 		file_path = base_url + f'checkpoints/UAHS.pt'
@@ -45,12 +45,12 @@ class UAHSProvisioner(Provisioner):
 	def prediction(self):
 		self.updateBuffer()
 		pred, std = [], []
-		for i in range(self.window.shape[1]):
+		for i in range(self.window.shape[0]):
 			dx = np.array([self.window[i]])
-			p, s = self.model.predict(dx.reshape(1, -1), return_std=True)
-			pred.append(p); std.append(s)
-		pred = denormalize(pred, self.minv, self.maxv)[0]
-		return pred, std[0]
+			p, s = self.model[i].predict(dx.reshape(1, -1), return_std=True)
+			pred.append(p[0][0]); std.append(s[0])
+		pred = denormalize(np.array(pred), self.minv, self.maxv)[0]
+		return pred, std
 
 	def provision(self):
 		predips, stdips = self.prediction()

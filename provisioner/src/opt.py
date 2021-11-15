@@ -148,6 +148,7 @@ class StochasticSearch(Opt):
 		super().__init__(ipsdata, env, maxv)
 		self.stddata = np.array(stddata)
 		self.k = 0.1
+		# Upper Confidence Bound
 		self.ipsdata = np.array(self.ipsdata) + self.k * self.stddata
 
 	def search(self):
