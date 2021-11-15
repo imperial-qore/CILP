@@ -143,6 +143,28 @@ class ACO(Opt):
 				newfitness[ant] = fitness[index]
 		return self.decisions[np.argmax(newfitness)]
 
+class UAHSSearch(Opt):
+	def __init__(self, ipsdata, stddata, env, maxv):
+		super().__init__(ipsdata, env, maxv)
+		self.stddata = np.array(stddata)
+		self.k = 0.1
+		self.ipsdata = np.array(self.ipsdata) + self.k * self.stddata
+
+	def search(self):
+		oldfitness, newfitness = 0, 1
+		for _ in range(50):
+			if newfitness < oldfitness: break
+			oldfitness = newfitness
+			neighbourhood, numadds = self.neighbours(self.decision)
+			if np.random.choice([0, 1], p=[0.6, 0.4]): break
+			if neighbourhood == []: break
+			fitness = [self.evaluatedecision(n) for n in neighbourhood]
+			index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
+				if np.random.random() < 0.2 else np.argmax(fitness)
+			self.decision = neighbourhood[index]
+			newfitness = fitness[index]
+		return self.decision
+
 class CILPSearch(Opt):
 	def __init__(self, ipsdata, env, maxv, window_buffer, host_util, model, optimizer, scheduler, loss_list, training):
 		super().__init__(ipsdata, env, maxv)

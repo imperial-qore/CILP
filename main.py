@@ -41,6 +41,7 @@ from provisioner.Provisioner import Provisioner
 from provisioner.Random_Provisioner import RandomProvisioner
 from provisioner.LocalSearchANN import LSANNProvisioner
 from provisioner.ACOLSTM import ACOLSTMProvisioner
+from provisioner.UAHS import UAHSProvisioner
 from provisioner.CILP import CILPProvisioner
 from provisioner.CILP_IL import CILP_ILProvisioner
 from provisioner.CILP_Trans import CILP_TransProvisioner
@@ -65,10 +66,6 @@ DB_NAME = ''
 DB_HOST = ''
 DB_PORT = 0
 HOSTS_IP = []
-logFile = 'COSCO.log'
-
-if len(sys.argv) > 1:
-	with open(logFile, 'w'): os.utime(logFile, None)
 
 def initalizeEnvironment(environment, logger):
 	if environment != '':
