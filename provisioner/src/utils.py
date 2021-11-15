@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 from .models import *
 
 def convert_to_windows(data, model):
@@ -127,3 +128,6 @@ class color:
 	ENDC = '\033[0m'
 	BOLD = '\033[1m'
 	UNDERLINE = '\033[4m'
+
+def hashabledict(dict):
+  return json.dumps(dict)

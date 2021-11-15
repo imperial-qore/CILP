@@ -165,6 +165,35 @@ class StochasticSearch(Opt):
 			newfitness = fitness[index]
 		return self.decision
 
+class MABSearch(Opt):
+	def __init__(self, ipsdata, env, maxv):
+		super().__init__(ipsdata, env, maxv)
+		self.mab1 = {}
+		self.mabT = {}
+
+	def search(self):
+		oldfitness, newfitness = 0, 1
+		for _ in range(50):
+			if newfitness < oldfitness: break
+			oldfitness = newfitness
+			neighbourhood, numadds = self.neighbours(self.decision)
+			if neighbourhood == []: break
+			fitness = []; weights = []
+			for n in neighbourhood:
+				f = self.evaluatedecision(n)
+				fitness.append(f)
+				self.mab1[hashabledict(n)] = self.mab1.get(hashabledict(n), 0) + (1 if f > newfitness else 0)
+				self.mabT[hashabledict(n)] = self.mabT.get(hashabledict(n), 0) + 1
+				ones, total = 1 + self.mab1[hashabledict(n)], 1 + self.mabT[hashabledict(n)] + self.mab1[hashabledict(n)]
+				weights.append(np.random.beta(ones, total))
+			weights = np.array(weights); weights /= np.sum(weights)
+			# thompson sampling
+			index = np.random.choice(list(range(len(fitness))), p=weights) \
+				if np.random.random() < 0.3 else np.argmax(fitness)
+			self.decision = neighbourhood[index]
+			newfitness = fitness[index]
+		return self.decision
+
 class CILPSearch(Opt):
 	def __init__(self, ipsdata, env, maxv, window_buffer, host_util, model, optimizer, scheduler, loss_list, training):
 		super().__init__(ipsdata, env, maxv)
