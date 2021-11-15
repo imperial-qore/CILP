@@ -7,7 +7,7 @@ from simulator.environment.AzureFog import *
 class UAHSProvisioner(Provisioner):
 	def __init__(self, datacenter, CONTAINERS):
 		super().__init__(datacenter, CONTAINERS)
-		self.model_name = 'Attention'
+		self.model_name = 'UAHS'
 		self.search = StochasticSearch
 		self.model_loaded = False
 		self.window_buffer = []
@@ -19,9 +19,9 @@ class UAHSProvisioner(Provisioner):
 		dataset, _, self.minv, self.maxv = load_dataset('apparentips_with_interval.csv')
 		# Load model
 		X = np.array([np.array(i).reshape(-1) for i in dataset])
-		y = np.roll(X, 1, axis=0); 
-		kernel_hetero = C(1.0, (1e-10, 1000)) * RBF(1, (0.01, 100.0)) 
-		self.model = GaussianProcessRegressor(kernel=kernel_hetero, alpha=0)
+		y = np.roll(X, 1, axis=0); print(X.shape, y.shape)
+		kernel_hetero = C(1.0, (1e-10, 1000)) * RBF(0.5, (0.00, 100.0)) 
+		self.model = [GaussianProcessRegressor(kernel=kernel_hetero, alpha=0.01) for _ in range(X.shape[1])]
 		file_path = base_url + f'checkpoints/UAHS.pt'
 		if os.path.exists(file_path):
 			print(color.GREEN+"Loading pre-trained model: UAHS"+color.ENDC)
@@ -29,11 +29,11 @@ class UAHSProvisioner(Provisioner):
 				self.model = pickle.load(f)
 		else:
 			print(color.GREEN+"Creating new model: UAHS"+color.ENDC)
-			self.model = self.model.fit(X, y)
+			for i in range(X.shape[1]):
+				dx, dy = X[:, i].reshape(X.shape[0], -1), y[:, i].reshape(X.shape[0], -1)
+				self.model[i] = self.model[i].fit(dx, dy)
 			with open(file_path, 'wb') as f:
 				pickle.dump(self.model, f)
-		print("Heteroscedastic kernel: %s" % self.model.kernel_)
-		print("Heteroscedastic LML: %.3f" % self.model.log_marginal_likelihood(self.model.kernel_.theta))
 		self.model_loaded = True
 
 	def updateBuffer(self):
@@ -44,7 +44,11 @@ class UAHSProvisioner(Provisioner):
 
 	def prediction(self):
 		self.updateBuffer()
-		pred, std = self.model.predict(self.window.reshape(1, -1), return_std=True)
+		pred, std = [], []
+		for i in range(self.window.shape[1]):
+			dx = np.array([self.window[i]])
+			p, s = self.model.predict(dx.reshape(1, -1), return_std=True)
+			pred.append(p); std.append(s)
 		pred = denormalize(pred, self.minv, self.maxv)[0]
 		return pred, std[0]
 
