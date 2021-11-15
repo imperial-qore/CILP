@@ -71,19 +71,11 @@ TOTAL_POWER = 1000
 ROUTER_BW = 10000
 INTERVAL_TIME = 300 # seconds
 NEW_CONTAINERS = 7
-DB_NAME = ''
-DB_HOST = ''
-DB_PORT = 0
-HOSTS_IP = []
 
 # Proposed: CILP. Ablations: CILP_IL, CILP_Trans
 # Baselines: ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS
 
 def initalizeEnvironment(environment, logger):
-	if environment != '':
-		# Initialize the db
-		db = Database(DB_NAME, DB_HOST, DB_PORT)
-
 	# Initialize simple fog datacenter
 	''' Can be SimpleFog, BitbrainFog, AzureFog '''
 	datacenter = AzureFog(HOSTS)
