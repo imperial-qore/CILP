@@ -55,7 +55,7 @@ from pdb import set_trace as bp
 from sys import argv
 import argparse
 
-usage = "usage: python main.py -provisioner <provisioner> -workload <workload>"
+usage = "usage: python main.py --provisioner <provisioner> --workload <workload>"
 parser = argparse.ArgumentParser(usage=usage)
 parser.add_argument('--provisioner', 
                     help='Name of provisioner. One of ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS, or CILP, CILP_IL, CILP_Trans.')
