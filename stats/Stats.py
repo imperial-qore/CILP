@@ -179,10 +179,14 @@ class Stats():
 		avg = np.average(metric_with_interval); std = np.std(metric_with_interval)
 		table.append([labels[-1], "{:.4f}".format(avg) + u" \u00B1" + f' {"{:.4f}".format(std)}'])
 		print(tabulate(table, headers=['Metric', 'Value'], tablefmt='orgtbl'))
-		print('Average energy (sum energy interval / sum numdestroyed) :', res['energytotalinterval']/res['numdestroyed']/10e6)
-		print('Average cost (sum cost interval / sum numdestroyed) :', res['cost']/res['numdestroyed'])
+		avgl1, avgl2 = 'Average energy (sum energy interval / sum numdestroyed)', 'Average cost (sum cost interval / sum numdestroyed)'
+		print(avgl1 + ' :', res['energytotalinterval']/res['numdestroyed']/10e6)
+		print(avgl1 + ' :', res['cost']/res['numdestroyed'])
+		table.append([avgl1, res['energytotalinterval']/res['numdestroyed']/10e6])
+		table.append([avgl2, res['cost']/res['numdestroyed']])
 		plt.tight_layout(pad=0)
 		plt.savefig(dirname + '/' + 'Metrics' + '.pdf')
+		return table
 
 	def generateWorkloadWithInterval(self, dirname):
 		fig, axes = plt.subplots(5, 1, sharex=True, figsize=(4, 5))
@@ -244,8 +248,9 @@ class Stats():
 		# self.generateGraphsWithInterval(dirname, self.hostinfo, 'host', 'ipscap', 'apparentips')
 		# self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'ips', 'apparentips')
 		# self.generateGraphsWithInterval(dirname, self.activecontainerinfo, 'container', 'hostalloc')
-		self.generateMetricsWithInterval(dirname)
+		table = self.generateMetricsWithInterval(dirname)
 		# self.generateWorkloadWithInterval(dirname)
+		return table
 
 	def generateDatasets(self, dirname):
 		# self.generateDatasetWithInterval(dirname, 'cpu', objfunc='energytotalinterval')
