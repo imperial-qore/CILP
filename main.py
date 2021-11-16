@@ -1,11 +1,9 @@
 import os, sys, stat
 import sys
 import optparse
-import logging as logger
 import configparser
 import pickle
 import shutil
-import sqlite3
 import platform
 from time import time
 from subprocess import call
@@ -75,14 +73,14 @@ NEW_CONTAINERS = 7
 # Proposed: CILP. Ablations: CILP_IL, CILP_Trans
 # Baselines: ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS
 
-def initalizeEnvironment(environment, logger):
+def initalizeEnvironment(workload, provisioner):
 	# Initialize simple fog datacenter
 	''' Can be SimpleFog, BitbrainFog, AzureFog '''
 	datacenter = AzureFog(HOSTS)
 
 	# Initialize workload
 	''' Can be Bitbrain, Azure2017, Azure2019 '''
-	workload = eval(args.workload + 'Workload')(NEW_CONTAINERS, 1.5)
+	workload = eval(workload + 'Workload')(NEW_CONTAINERS, 1.5)
 	
 	# Initialize scheduler
 	''' Can be LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI (arg = 'energy_latency_'+str(HOSTS)) '''
@@ -90,7 +88,7 @@ def initalizeEnvironment(environment, logger):
 
 	# Initialize provisioner
 	''' Can be CILP, ACOARIMA, ACOLSTM, DecisionNN, SemiDirect, UAHS, Narya, CAHS '''
-	provisioner = eval(args.provisioner + 'Provisioner')(datacenter, CONTAINERS)
+	provisioner = eval(provisioner + 'Provisioner')(datacenter, CONTAINERS)
 
 	# Initialize Environment
 	hostlist = datacenter.generateHosts()
@@ -150,15 +148,15 @@ def saveStats(stats, datacenter, workload, env, end=True):
 	os.mkdir(dirname)
 	if not end: return
 	stats.generateDatasets(dirname)
-	stats.generateGraphs(dirname)
+	table = stats.generateGraphs(dirname)
 	# stats.generateCompleteDatasets(dirname)
 	stats.env, stats.workload, stats.datacenter, stats.scheduler = None, None, None, None
 	with open(dirname + '/' + dirname.split('/')[1] +'.pk', 'wb') as handle:
 	    pickle.dump(stats, handle)
+	return table
 
 if __name__ == '__main__':
-	env, mode = '', 0
-	datacenter, workload, scheduler, provisioner, env, stats = initalizeEnvironment(env, logger)
+	datacenter, workload, scheduler, provisioner, env, stats = initalizeEnvironment(args.workload, args.provisioner)
 
 	for step in range(NUM_SIM_STEPS):
 		print(color.BOLD+"Simulation Interval:", step, color.ENDC)

@@ -140,3 +140,5 @@ dmypy.json
 .pyre/
 todo.txt
 provisioner/src/checkpoints/UAHS.pt
+*.json
+results.py

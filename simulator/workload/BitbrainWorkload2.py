@@ -15,7 +15,7 @@ warnings.simplefilter("ignore")
 # Source: https://archive.vn/20130205075133/http://www.tomshardware.com/charts/cpu-charts-2004/Sandra-CPU-Dhrystone,449.html
 ips_multiplier = 2054.0 / (2 * 600)
 
-class BitBrainWorkload(Workload):
+class BitbrainWorkload(Workload):
 	def __init__(self, meanNumContainers, sigmaNumContainers):
 		super().__init__()
 		self.mean = meanNumContainers

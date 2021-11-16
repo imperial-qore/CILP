@@ -114,9 +114,10 @@ class LocalSearch(Opt):
 			oldfitness = newfitness
 			neighbourhood, numadds = self.neighbours(self.decision)
 			if neighbourhood == []: break
+			if np.random.choice([0, 1], p=[0.6, 0.4]): break
 			fitness = [self.evaluatedecision(n) for n in neighbourhood]
 			index = np.random.choice(list(range(len(fitness))), p=self.getweights(fitness, numadds)) \
-				if np.random.random() < 0.4 else np.argmax(fitness)
+				if np.random.random() < 0.3 else np.argmax(fitness)
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
@@ -179,6 +180,7 @@ class MABSearch(Opt):
 			oldfitness = newfitness
 			neighbourhood, numadds = self.neighbours(self.decision)
 			if neighbourhood == []: break
+			if np.random.choice([0, 1], p=[0.25, 0.75]): break
 			fitness = []; weights = []
 			for n in neighbourhood:
 				f = self.evaluatedecision(n)
@@ -190,7 +192,7 @@ class MABSearch(Opt):
 			weights = np.array(weights); weights /= np.sum(weights)
 			# thompson sampling
 			index = np.random.choice(list(range(len(fitness))), p=weights) \
-				if np.random.random() < 0.3 else np.argmax(fitness)
+				if np.random.random() < 0.6 else np.argmax(fitness)
 			self.decision = neighbourhood[index]
 			newfitness = fitness[index]
 		return self.decision
@@ -236,7 +238,7 @@ class CILPSearch(Opt):
 			oldfitness = newfitness
 			neighbourhood, numadds = self.neighbours(self.decision)
 			if neighbourhood == []: break
-			if np.random.choice([0, 1], p=[0.2, 0.8]): break
+			if np.random.choice([0, 1], p=[0.1, 0.9]): break
 			fitness = []; ls = []
 			for n in neighbourhood:
 				r, newhostips = self.cosimulator(n)
