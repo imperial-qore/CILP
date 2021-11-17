@@ -12,6 +12,7 @@ framework/agent/DockerImages
 all_datasets
 results
 modstat.py
+graphs/
 
 # C extensions
 *.so
