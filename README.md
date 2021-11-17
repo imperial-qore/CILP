@@ -1,6 +1,7 @@
 # CILP
 
-CILP: Co-simulation based Imitation Learner for Resource Provisioning in Cloud Computing
+CILP: Co-simulation based Imitation Learner for Resource Provisioning in Cloud Computing.
+IJCAI - 2022.
 
 ## Figures
 
