@@ -9,7 +9,7 @@ Here, (2) and (3) affect utilization ratio. Also, we consider deployment cost in
 
 ## Figures
 
-* Fig: Neural Model
+* @Fig: Neural Model
 * Fig: Interaction between co-simulator and IL (top-level design)
 * Alg: CILP algo
 * @Tab: Results and ablation (r, cost, qos)

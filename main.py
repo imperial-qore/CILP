@@ -13,7 +13,7 @@ from os import system, rename
 from simulator.Simulator import *
 from simulator.environment.AzureFog import *
 from simulator.environment.BitbrainFog import *
-from simulator.workload.BitbrainWorkload_GaussianDistribution import *
+from simulator.workload.StaticWorkload_StaticDistribution import *
 from simulator.workload.BitbrainWorkload2 import *
 from simulator.workload.Azure2017Workload import *
 from simulator.workload.Azure2019Workload import *
