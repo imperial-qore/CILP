@@ -18,3 +18,4 @@ cython
 SciencePlots
 seaborn
 tabulate
+tqdm
