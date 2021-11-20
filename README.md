@@ -1,25 +1,27 @@
-# CILP
+# Code supplementary for the CILP paper
 
-CILP: Co-simulation based Imitation Learner for Resource Provisioning in Cloud Computing.
-IJCAI - 2022.
+CILP: Co-simulation based Imitation Learner for Dynamic\\Resource Provisioning in Cloud Computing. IJCAI - 2022.
 
-Prior work does not consider energy, provisioning and migration overheads. (1) Energy: the cpu to power consumption mapping for a cloud node is considered to be stable with time and this has been used in many simulated environments. (2) Provisioning: the time taken to provision cloud nodes is consistent and the conditional distribution of cost conditioned on resource type is stationary over time. (3) Migration: Overheads
 
-Here, (2) and (3) affect utilization ratio. Also, we consider deployment cost in our model and provisioning is not free. QoS is considered as a convex combination of energy, sla violation rate and cost (HUNTER). The weightage between utilization ratio and cost can be set as per user. Our method is agnostic to deployment platform. For public cloud cost important, for private cloud utilization ratio is important.
+## CILP Approach
+We present a novel VM provisioner CILP in this paper that uses a Transformer based co-simulated imitation learner.
 
-## Figures
+## Quick Start Guide
+To run the code, install required packages using
+```bash
+pip3 install matplotlib scikit-learn
+pip3 install -r requirements.txt
+pip3 install torch==1.7.1+cpu torchvision==0.8.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+```
 
-* @Fig: Neural Model
-* Fig: Interaction between co-simulator and IL (top-level design)
-* Alg: CILP algo
-* @Tab: Results and ablation (r, cost, qos)
-* @Tab: Results with gamma hyperparameter (r, cost, qos)
-* @Fig: QoS results (energy pi, response time pi, sla pi, provisioning overhead, migrations overhead)
+To run the code with the required provisioner and dataset use the following
+```bash
+python3 main.py --provisioner <provisioner> --workload <workload>
+```
+Here `<provisioner>` can be one of `ACOARIMA`, `ACOLSTM`, `DecisionNN`, `SemiDirect`, `UAHS`, `Narya`, `CAHS`, `CILP_IL`, `CILP_Trans` and `CILP`. Also, `<workload>` can be one of `Azure2017`, `Azure2019` and `Bitbrain`.
 
-## License
-
-BSD-3-Clause. 
-Copyright (c) 2021, Shreshth Tuli.
-All rights reserved.
-
-See License file for more details.
+Sample command:
+```bash
+python3 main.py --provisioner CILP --workload Azure2017
+```
+To run the code with the required scheduler, modify line 104 of main.py to one of the several options including LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI.
