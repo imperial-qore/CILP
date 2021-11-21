@@ -1,6 +1,6 @@
 # Code supplementary for the CILP paper
 
-CILP: Co-simulation based Imitation Learner for Dynamic\\Resource Provisioning in Cloud Computing. IJCAI - 2022.
+CILP: Co-simulation based Imitation Learner for Dynamic Resource Provisioning in Cloud Computing. IJCAI - 2022.
 
 
 ## CILP Approach
