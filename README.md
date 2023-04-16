@@ -27,7 +27,7 @@ python3 main.py --provisioner CILP --workload Azure2017
 To run the code with the required scheduler, modify line 104 of main.py to one of the several options including LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI.
 
 ## Cite this work
-Our work is published in IEEE TMS< journal. Cite using the following bibtex entry.
+Our work is published in IEEE TMSM journal. Cite using the following bibtex entry.
 ```bibtex
 @article{tuli2023cilp,
   author={Tuli, Shreshth and Casale, Giuliano and Jennings, Nicholas R.},
