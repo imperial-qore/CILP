@@ -25,3 +25,21 @@ Sample command:
 python3 main.py --provisioner CILP --workload Azure2017
 ```
 To run the code with the required scheduler, modify line 104 of main.py to one of the several options including LRMMTR, RF, RL, RM, Random, RLRMMTR, TMCR, TMMR, TMMTR, GA, GOBI.
+
+## Cite this work
+Our work is published in IEEE TMS< journal. Cite using the following bibtex entry.
+```bibtex
+@article{tuli2023cilp,
+  author={Tuli, Shreshth and Casale, Giuliano and Jennings, Nicholas R.},
+  journal={IEEE Transactions on Network and Service Management}, 
+  title={{CILP: Co-simulation based Imitation Learner for Dynamic Resource Provisioning in Cloud Computing}}, 
+  year={2023}
+}
+```
+## License
+
+BSD-3-Clause. 
+Copyright (c) 2023, Shreshth Tuli.
+All rights reserved.
+
+See License file for more details.
